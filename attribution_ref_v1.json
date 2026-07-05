@@ -1,0 +1,656 @@
+{
+  "set": "attribution_ref",
+  "schema_version": "attribution_ref/v1",
+  "description": "Edge-agnostic attribution evidence envelope over the same substrate as composite_trust_query_lite_v1 (RFC 8785 JCS + SHA-256, pin urn:x402:canonicalisation:jcs-rfc8785-v1). attribution_ref = \"sha256:\" + SHA-256(JCS({edge, subject_refs, tier})). The edge is a parameter of the shape: each edge declares its subject sequence (typed positions), its closed tier domain, and which tiers bind an observation. subject_refs is an ordered array of typed members {type, value[, observed_at_ms, observation]}; order, membership, member types and member bytes are all byte-load-bearing, so every value form is pinned: the endpoint profile is https-only with lowercase host, no port, no fragment, no userinfo (path/query byte-exact as probed); eip155 addresses are CAIP-10 with EIP-55 checksum normative on the emitter (runners enforce shape; checksum verification needs keccak-256, outside the stdlib runner envelope); did:web hosts are lowercase; member strings must be well-formed Unicode; observed_at_ms is an integer in (0, 2^53-1] so every parser sees the same value; a member carries exactly {type,value} or exactly {type,value,observed_at_ms,observation} and nothing else. Verifiers consuming claims off the wire MUST additionally require JCS-form input (re-canonicalise and byte-compare before hashing) \u2014 a JSON parser erases number form, and that gate is what makes the grammar identical across languages. Network-state rungs (signed_endpoint_claim, signed_wallet_claim on x402:payto-operator/v1) MUST bind the probe into the preimage: observed_at_ms plus a sha256 over the exact 402 response-body bytes observed. Endpoint drift then yields a legitimately different reference (po-001 vs po-003), while an altered claim over the same observation cannot keep its reference (po-neg-obs-tamper). Chain-state edges (x402:facilitator-settlement/v1) bind no observation. A tier outside the edge's domain, an observation where the edge forbids or lacks it, a reordered, dropped, duplicated or decorated subject, a non-canonical value spelling, or an unknown edge is rejected, not hashed.",
+  "canonicalizer": "rfc8785-jcs",
+  "fields": [
+    "edge",
+    "subject_refs",
+    "tier"
+  ],
+  "edges": {
+    "x402:payto-operator/v1": {
+      "subject_positions": [
+        "endpoint",
+        "address",
+        "key"
+      ],
+      "tier_domain": [
+        "signed_wallet_claim",
+        "signed_endpoint_claim",
+        "corroborated",
+        "catalog_declared",
+        "heuristic"
+      ],
+      "observation_tiers": [
+        "signed_wallet_claim",
+        "signed_endpoint_claim"
+      ],
+      "observation_position": 0
+    },
+    "x402:facilitator-settlement/v1": {
+      "subject_positions": [
+        "facilitator",
+        "address"
+      ],
+      "tier_domain": [
+        "signed_attribution",
+        "settle_response",
+        "supported_signer",
+        "catalog_declared",
+        "heuristic"
+      ],
+      "observation_tiers": [],
+      "observation_position": null
+    }
+  },
+  "note_observation": "po-001/po-003 observations are real: two POST probes of a live x402 endpoint (verify.smartflowproai.com/audit/order) on 2026-07-05; each observation value is the SHA-256 of the exact 402 response-body bytes as received, frozen in observations/. The endpoint mints a per-order id in the body, so no two probes return identical bytes -- which is the point: a recompute is against a frozen event, not live state.",
+  "vectors": [
+    {
+      "id": "po-001",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "expected_attribution_ref": "sha256:1f48442b3dc50e3a43c00678ccb7dfd44badde255a4bcf17193e6f4fbd54fc34",
+      "note": "worked example from a live endpoint: the observation hash freezes the exact 402 body bytes observed (artifact: observations/po-001-402-body.bin), the endpoint's accepts[] declares the payTo above. The operator key is the W3C did:key example key (publicly known private key), illustrative: this vector exercises the hash construction, not a verified attribution \u2014 no claim document exists for it"
+    },
+    {
+      "id": "po-002",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "heuristic",
+      "expected_attribution_ref": "sha256:a714ac6492884ad0ea140f3b1f0ff2749713fb5376ee06748ed6291564e8ede6",
+      "note": "same three subjects, heuristic rung: no probe happened, so no observation fields \u2014 presence/absence is governed by the edge definition, not emitter choice"
+    },
+    {
+      "id": "po-003",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252667907,
+          "observation": "sha256:92c7469afbab33750d87928aff391b4000828d778348091e5457163509b4dd59"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "expected_attribution_ref": "sha256:2ab71f3cf9ac96004cea402e65fb11ec279bd17f7689743288fc86652a726934",
+      "note": "drift pair of po-001: same subjects, a later probe of the same endpoint returned different bytes (artifact: observations/po-003-402-body.bin) -> a legitimately different reference, not a broken one"
+    },
+    {
+      "id": "fa-001",
+      "edge": "x402:facilitator-settlement/v1",
+      "subject_refs": [
+        {
+          "type": "facilitator",
+          "value": "did:web:facilitator.example"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0x0000000000000000000000000000000000000001"
+        }
+      ],
+      "tier": "signed_attribution",
+      "expected_attribution_ref": "sha256:7545b0d49f83ced24f8ed76d04d5ef9e140cf7f3d592d6f8b8821e4c098593c3",
+      "note": "facilitator edge as an instance of the same envelope (illustrative subjects); tier domain is #2335's observer-confidence list, unchanged"
+    },
+    {
+      "id": "fa-002",
+      "edge": "x402:facilitator-settlement/v1",
+      "subject_refs": [
+        {
+          "type": "facilitator",
+          "value": "did:web:facilitator.example"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0x0000000000000000000000000000000000000001"
+        }
+      ],
+      "tier": "supported_signer",
+      "expected_attribution_ref": "sha256:ebb8771654c70eeed65239bb28de2fa935e432360cd3e91ca81ea1b5a27d4736",
+      "note": "same subjects, different rung of the facilitator domain -> different reference"
+    }
+  ],
+  "negatives": [
+    {
+      "id": "po-neg-tier-swap",
+      "family": "tier",
+      "claimed_attribution_ref": "sha256:1f48442b3dc50e3a43c00678ccb7dfd44badde255a4bcf17193e6f4fbd54fc34",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_wallet_claim",
+      "recomputes_to": "sha256:e4daebdf14656674b4e83ca4618c6be103a1d8fa567afa56d7364d4780f95eb4",
+      "must": "differ",
+      "note": "same subjects and observation, claimed one rung higher; the reference diverges (tier is byte-load-bearing)"
+    },
+    {
+      "id": "po-neg-obs-tamper",
+      "family": "bound_observation",
+      "claimed_attribution_ref": "sha256:1f48442b3dc50e3a43c00678ccb7dfd44badde255a4bcf17193e6f4fbd54fc34",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a7"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "recomputes_to": "sha256:c0e8da5c97245836baa8315d6847555752b9c5e8f4ed428160a4de5c0db43e62",
+      "must": "differ",
+      "note": "one-bit change in the observation hash: an altered claim over the same probe cannot keep the claimed reference"
+    },
+    {
+      "id": "po-neg-payto-swap",
+      "family": "subject_value",
+      "claimed_attribution_ref": "sha256:1f48442b3dc50e3a43c00678ccb7dfd44badde255a4bcf17193e6f4fbd54fc34",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0x0000000000000000000000000000000000000001"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "recomputes_to": "sha256:2ffc5d613a3c9083f41020dd5a01b6c700600e3ccf82c05ec7539cc4cd6b447a",
+      "must": "differ",
+      "note": "different payTo under the same endpoint observation -> different reference (a claim cannot quietly re-point the wallet)"
+    },
+    {
+      "id": "po-neg-obs-drop",
+      "family": "bound_observation",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "signed_endpoint_claim rests on a live-402 cross-check; a claim without the bound observation is rejected, not hashed"
+    },
+    {
+      "id": "po-neg-obs-on-heuristic",
+      "family": "bound_observation",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "heuristic",
+      "must": "reject",
+      "reason": "heuristic asserts no probe; observation fields present where the edge/tier forbids them are rejected"
+    },
+    {
+      "id": "po-neg-cross-edge-tier",
+      "family": "per_edge_tier_domain",
+      "edge": "x402:facilitator-settlement/v1",
+      "subject_refs": [
+        {
+          "type": "facilitator",
+          "value": "did:web:facilitator.example"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0x0000000000000000000000000000000000000001"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "signed_endpoint_claim is not in the facilitator edge's domain; a rung the edge cannot earn is rejected, not hashed"
+    },
+    {
+      "id": "po-neg-order-swap",
+      "family": "positional_grammar",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "positions are typed (endpoint, address, key); a reordered array fails the grammar \u2014 and under JCS the array bytes would differ anyway"
+    },
+    {
+      "id": "po-neg-subset-drop",
+      "family": "positional_grammar",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "the edge fixes arity at three; a dropped subject fails the grammar rather than hashing to a plausible reference"
+    },
+    {
+      "id": "po-neg-invalid-tier",
+      "family": "closed_enum",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "TRUSTED",
+      "must": "reject",
+      "reason": "tier domains are per-edge and closed; a member of a different family's enum (trust_outcome) is rejected"
+    },
+    {
+      "id": "po-neg-unknown-edge",
+      "family": "edge_registry",
+      "edge": "x402:payer-agent/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "heuristic",
+      "must": "reject",
+      "reason": "edges are a closed registry per envelope version; an undeclared edge is rejected, not hashed"
+    },
+    {
+      "id": "po-neg-empty",
+      "family": "empty_field",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [],
+      "tier": "heuristic",
+      "must": "reject",
+      "reason": "subject_refs must carry exactly the edge's subject sequence; an empty list is rejected"
+    },
+    {
+      "id": "po-neg-unknown-member-key",
+      "family": "member_grammar",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6",
+          "note": "probed from eu-west"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "a member carries exactly {type,value} or exactly {type,value,observed_at_ms,observation}; any extra key is rejected \u2014 otherwise two honest emitters could decorate members differently and diverge on the same fact"
+    },
+    {
+      "id": "po-neg-partial-obs",
+      "family": "member_grammar",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "observed_at_ms and observation travel together; a member carrying one without the other is rejected"
+    },
+    {
+      "id": "po-neg-arity-excess",
+      "family": "positional_grammar",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "arity is fixed per edge; a fourth subject is rejected just as a dropped one is"
+    },
+    {
+      "id": "po-neg-ms-bool",
+      "family": "number_form",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": true,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "observed_at_ms must be an integer; a boolean is rejected in every implementation (a Python isinstance(int) check alone would pass True \u2014 the guard is explicit)"
+    },
+    {
+      "id": "po-neg-ms-overflow",
+      "family": "number_form",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 9223372036854775808,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "observed_at_ms is bounded to (0, 2^53-1] so every implementation parses the same value; beyond IEEE-754 exact-integer range JS parsers silently round and distinct inputs would collide"
+    },
+    {
+      "id": "po-neg-lone-surrogate",
+      "family": "string_wellformedness",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z\ud800broken"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "member strings must be well-formed Unicode; a lone surrogate is JSON-expressible but not UTF-8-encodable, and implementations that silently substitute U+FFFD would collide distinct inputs"
+    },
+    {
+      "id": "po-neg-endpoint-uppercase-host",
+      "family": "canonical_url_profile",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://VERIFY.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "the v1 endpoint profile pins scheme and host to lowercase (DNS is case-insensitive, bytes are load-bearing); a non-canonical spelling of the same endpoint is rejected, not hashed into a second ref"
+    },
+    {
+      "id": "po-neg-endpoint-fragment",
+      "family": "canonical_url_profile",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order#frag",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "fragments never reach the server, so two spellings would name one observed resource; the profile also excludes userinfo and any explicit port"
+    },
+    {
+      "id": "fa-neg-didweb-case",
+      "family": "canonical_url_profile",
+      "edge": "x402:facilitator-settlement/v1",
+      "subject_refs": [
+        {
+          "type": "facilitator",
+          "value": "did:web:Facilitator.Example"
+        },
+        {
+          "type": "address",
+          "value": "eip155:8453:0x0000000000000000000000000000000000000001"
+        }
+      ],
+      "tier": "signed_attribution",
+      "must": "reject",
+      "reason": "did:web hosts are DNS names; the profile pins them lowercase for the same reason as endpoint hosts"
+    },
+    {
+      "id": "po-neg-chainid-zeros",
+      "family": "canonical_value_form",
+      "edge": "x402:payto-operator/v1",
+      "subject_refs": [
+        {
+          "type": "endpoint",
+          "value": "https://verify.smartflowproai.com/audit/order",
+          "observed_at_ms": 1783252462000,
+          "observation": "sha256:575ad15e5ad3f6cd5611c81be8b0e88b787b63f318bed631b48237e906f7c7a6"
+        },
+        {
+          "type": "address",
+          "value": "eip155:08453:0xd779cE46567d21b9918F24f0640cA5Ad6058C893"
+        },
+        {
+          "type": "key",
+          "value": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        }
+      ],
+      "tier": "signed_endpoint_claim",
+      "must": "reject",
+      "reason": "chain ids are canonical decimal with no leading zeros; eip155:08453 and eip155:8453 would otherwise mint two refs for the same chain"
+    }
+  ],
+  "invariants": [
+    {
+      "id": "tier-distinctness",
+      "assert": "changing tier changes attribution_ref (po-001 vs po-neg-tier-swap; fa-001 vs fa-002)",
+      "reason": "the claimed rung is byte-load-bearing"
+    },
+    {
+      "id": "drift-vs-tamper",
+      "assert": "a new probe yields a new reference (po-001 vs po-003 differ); an altered claim over the same probe cannot keep the old one (po-neg-obs-tamper)",
+      "reason": "the bound observation freezes what was seen; drift changes the observation, tampering does not"
+    },
+    {
+      "id": "edge-in-preimage",
+      "assert": "edge is part of the hashed object; identical members and tier under a different edge cannot collide",
+      "reason": "cross-edge reuse of a reference must be impossible even where tier domains overlap (catalog_declared, heuristic)"
+    },
+    {
+      "id": "positional-grammar",
+      "assert": "reordering or dropping subjects is rejected by the typed positions (po-neg-order-swap, po-neg-subset-drop)",
+      "reason": "the parser is the grammar; and under JCS the array bytes would differ regardless, so an emitter that skips validation still cannot forge a matching reference"
+    }
+  ]
+}

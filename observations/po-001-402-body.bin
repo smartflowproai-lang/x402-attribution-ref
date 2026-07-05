@@ -1,0 +1,38 @@
+{
+  "x402Version": 2,
+  "error": "Payment required",
+  "resource": {
+    "url": "https://verify.smartflowproai.com/audit/order?id=aud_52b2afff71ce42f1",
+    "description": "SmartFlow self-serve x402 endpoint audit for https://api.example.com/x402 (order aud_52b2afff71ce42f1)",
+    "mimeType": "application/json"
+  },
+  "accepts": [
+    {
+      "scheme": "exact",
+      "network": "eip155:8453",
+      "maxAmountRequired": "199000000",
+      "amount": "199000000",
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "payTo": "0xd779cE46567d21b9918F24f0640cA5Ad6058C893",
+      "resource": "https://verify.smartflowproai.com/audit/order?id=aud_52b2afff71ce42f1",
+      "description": "SmartFlow self-serve x402 endpoint audit for https://api.example.com/x402 (order aud_52b2afff71ce42f1)",
+      "mimeType": "application/json",
+      "maxTimeoutSeconds": 300,
+      "extra": {
+        "name": "USD Coin",
+        "version": "2"
+      }
+    }
+  ],
+  "order": {
+    "id": "aud_52b2afff71ce42f1",
+    "target": "https://api.example.com/x402",
+    "price_usd": 199.0,
+    "pay_to": "0xd779cE46567d21b9918F24f0640cA5Ad6058C893",
+    "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "network": "eip155:8453",
+    "amount_atomic": "199000000",
+    "status_url": "https://verify.smartflowproai.com/audit/order?id=aud_52b2afff71ce42f1"
+  },
+  "human_fallback": "Prefer to pay manually? Send exactly $199.00 USDC on Base (eip155:8453) to 0xd779cE46567d21b9918F24f0640cA5Ad6058C893, then reply to your order confirmation with order id aud_52b2afff71ce42f1 so we can reconcile it. Same wallet, same amount \u2014 the order id in your follow-up removes any ambiguity."
+}
