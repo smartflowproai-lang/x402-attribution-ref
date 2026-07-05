@@ -1,0 +1,11 @@
+{
+  "name": "x402-attribution-ref",
+  "version": "0.1.0",
+  "description": "attribution_ref evidence envelope: edge-agnostic L2 over the AlgoVoi JCS conformance corpus",
+  "imports": {
+    "signing_base_set": "rfc9421_proxy_chain_v1",
+    "signing_base_vector": "REQUEST",
+    "signing_base_source_sha256": "7e5e8f1012eabd6aaae52b0ae4e77e4c8b0392077b620d2d944002a0531901e8",
+    "note": "L1 result imported as a fixed anchor (signing_base_ref), not redefined here."
+  }
+}
