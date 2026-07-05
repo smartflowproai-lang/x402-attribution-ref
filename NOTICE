@@ -1,0 +1,50 @@
+x402-attribution-ref
+Copyright 2026 Tom Smart (SmartFlow Observatory)
+
+Licensed under the Apache License, Version 2.0.
+
+This work is an edge extension of, and derives from, the AlgoVoi agentic-payments
+substrate. It builds on the AlgoVoi-authored canonicalisation discipline
+(urn:x402:canonicalisation:jcs-rfc8785-v1), specified in IETF Internet-Draft
+draft-hopley-x402-canonicalisation-jcs-v1.
+
+The following NOTICE is carried forward from the upstream substrate
+(chopmob-cloud/algovoi-jcs-conformance-vectors) per Apache License, Version 2.0,
+Section 4(d):
+
+--- BEGIN UPSTREAM NOTICE (chopmob-cloud/algovoi-jcs-conformance-vectors) ---
+algovoi-jcs-conformance-vectors
+Copyright 2026 Christopher Hopley / AlgoVoi (chopmob-cloud)
+
+This product is part of the AlgoVoi agentic-payments substrate, authored by
+Christopher Hopley (AlgoVoi) and licensed under the Apache License, Version 2.0.
+The substrate has two AlgoVoi-authored L1 parts, both covered by this NOTICE:
+  - the canonicalisation discipline (urn:x402:canonicalisation:jcs-rfc8785-v1),
+    specified in IETF Internet-Draft draft-hopley-x402-canonicalisation-jcs-v1; and
+  - the RFC 9421 Section 2.5 signing-base reference (rfc9421_proxy_chain_v1),
+    specified in IETF Internet-Draft draft-hopley-x402-rfc9421-binding.
+Documented at https://docs.algovoi.co.uk/canonicalisation-substrate.
+
+When redistributing this work or derivative works, retain this NOTICE per
+Apache License, Version 2.0, Section 4(d).
+
+L2 interop layer (additive, AlgoVoi-authored, Apache-2.0):
+  - governance_decision_v1 and composition/cross_engine_governance_v1 provide the
+    RFC 8785 (JCS) + SHA-256 digest-conformance and cross-engine layer for the crewAI
+    GovernanceDecision / GovernanceOutcome contract. That CONTRACT SCHEMA is crewAI's
+    (crewAIInc/crewAI PR #6030) and is referenced for interop, not claimed by AlgoVoi.
+    The conformance vectors, runners, emitters, and cross-engine proof are AlgoVoi's.
+--- END UPSTREAM NOTICE ---
+
+Changes and additions in this distribution (Tom Smart / SmartFlow Observatory, 2026):
+  - attribution-ref-extension.md -- spec draft generalising the attribution
+    envelope over typed subject positions [endpoint, address(payTo), key(operator)]
+    at fixed arity three, with the observation bound on the endpoint member.
+  - attribution_ref_v1.json -- positive and negative conformance vectors, computed
+    independently against the upstream pin.
+  - runner_python.py, runner_node.js -- two independent RFC 8785 (JCS) + SHA-256
+    verifiers.
+  - observations/ -- live HTTP 402 observations used as drift-versus-tamper vectors.
+
+The upstream canonicalisation pin and its discipline are referenced unchanged; no
+upstream files are modified or redistributed in this repository.

@@ -39,3 +39,9 @@ Follows [`algovoi-jcs-conformance-vectors`](https://github.com/chopmob-cloud/alg
 ## Status
 
 Draft for review in #2335. The edge registry, the `corroborated` rung, and observation coverage for header-only 402s are open questions — see spec §6.
+
+## License
+
+Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+
+This work builds on the AlgoVoi canonicalisation substrate ([`algovoi-jcs-conformance-vectors`](https://github.com/chopmob-cloud/algovoi-jcs-conformance-vectors), `urn:x402:canonicalisation:jcs-rfc8785-v1`), Apache-2.0. Upstream attribution and NOTICE are carried forward in [`NOTICE`](NOTICE).
